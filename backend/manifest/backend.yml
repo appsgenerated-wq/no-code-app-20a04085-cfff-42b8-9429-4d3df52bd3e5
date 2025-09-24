@@ -1,0 +1,60 @@
+name: FlavorFusion
+description: A platform to discover and share amazing recipes.
+
+features:
+  authentication:
+    user_entity: User
+    jwt_secret: env(JWT_SECRET)
+  file_upload:
+    provider: local # Can be changed to s3 for production
+
+entities:
+  User:
+    properties:
+      name: string(required=true)
+      email: string(unique=true, required=true)
+      password: password
+    relationships:
+      - type: hasMany
+        entity: Recipe
+      - type: hasMany
+        entity: Review
+
+  Recipe:
+    properties:
+      title: string(required=true)
+      description: string(required=true)
+      ingredients: array(required=true)
+      instructions: string(required=true)
+      prepTime: number # in minutes
+      cookTime: number # in minutes
+      imageUrl: file
+    relationships:
+      - type: belongsTo
+        entity: User
+        foreignKey: authorId
+      - type: hasMany
+        entity: Review
+    access_policies:
+      - role: Public # Unauthenticated users
+        permissions: [read]
+      - role: User # Authenticated users
+        permissions: [create, read, update, delete]
+        # Note: Manifest backend handles ownership checks for update/delete automatically
+
+  Review:
+    properties:
+      rating: number(required=true)
+      comment: string
+    relationships:
+      - type: belongsTo
+        entity: User
+        foreignKey: authorId
+      - type: belongsTo
+        entity: Recipe
+        foreignKey: recipeId
+    access_policies:
+      - role: Public
+        permissions: [read]
+      - role: User
+        permissions: [create, read, update, delete]
